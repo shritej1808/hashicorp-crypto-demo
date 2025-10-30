@@ -1,0 +1,73 @@
+services:
+  vault:
+    image: hashicorp/vault:1.15.0
+    container_name: vault-server
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_DEV_ROOT_TOKEN_ID=root-token
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: server -dev -dev-listen-address="0.0.0.0:8200" -dev-root-token-id="root-token"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8200/v1/sys/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - hashicorp-network
+
+  consul-server:
+    image: hashicorp/consul:1.16.0
+    container_name: consul-server
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0 -bind=0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8500/v1/status/leader || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - hashicorp-network
+
+  web-service:
+    image: nicholasjackson/fake-service:v0.25.2
+    container_name: web-service
+    ports:
+      - "8080:8080"
+    environment:
+      - NAME=web-service
+      - MESSAGE="Hello from Web Service"
+      - HTTP_PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hashicorp-network
+
+  api-service:
+    image: nicholasjackson/fake-service:v0.25.2
+    container_name: api-service
+    ports:
+      - "8081:8081"
+    environment:
+      - NAME=api-service
+      - MESSAGE="Hello from API Service"
+      - HTTP_PORT=8081
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hashicorp-network
+
+networks:
+  hashicorp-network:
+    driver: bridge
