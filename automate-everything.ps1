@@ -22,7 +22,8 @@ function Wait-ServiceReady {
             $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -ErrorAction Stop
             Write-Host "   $ServiceName is ready!" -ForegroundColor Green
             return $true
-        } catch {
+        }
+        catch {
             if ($i -eq 1) {
                 Write-Host "   Attempt $i of $MaxAttempts..." -ForegroundColor Gray
             }
@@ -45,7 +46,8 @@ if (-not (Test-CommandExists "docker")) {
 try {
     docker version | Out-Null
     Write-Host "   Docker is running" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "Docker daemon is not accessible" -ForegroundColor Red
     exit 1
 }
@@ -53,7 +55,7 @@ try {
 Write-Host "`n2. Starting Docker containers..." -ForegroundColor Cyan
 # Clean up any existing containers first
 Write-Host "   Stopping any existing containers..." -ForegroundColor Gray
-docker-compose down 2>$null
+docker-compose down 2> $null
 
 # Start containers
 Write-Host "   Starting new containers..." -ForegroundColor Gray
@@ -79,18 +81,18 @@ $env:VAULT_ADDR = "http://localhost:8200"
 
 # Initialize Vault
 Write-Host "   Initializing Vault..." -ForegroundColor Yellow
-vault login root-token 2>$null
+vault login root-token 2> $null
 
 # Enable secrets engines if not already enabled
-vault secrets enable -path=secret kv-v2 2>$null
-vault secrets enable transit 2>$null
+vault secrets enable -path=secret kv-v2 2> $null
+vault secrets enable transit 2> $null
 
 # Create encryption key
-vault write -f transit/keys/demo-key type="aes256-gcm96" 2>$null
+vault write -f transit/keys/demo-key type="aes256-gcm96" 2> $null
 
 # Create demo secrets
-vault kv put secret/demo/web-service api_key="wk_1234567890abcdef" database_url="postgresql://user:pass@db:5432/app" 2>$null
-vault kv put secret/demo/api-service jwt_secret="jwt_super_secret_2024" external_api_key="ext_9876543210zyxwvu" 2>$null
+vault kv put secret/demo/web-service api_key="wk_1234567890abcdef" database_url="postgresql://user:pass@db:5432/app" 2> $null
+vault kv put secret/demo/api-service jwt_secret="jwt_super_secret_2024" external_api_key="ext_9876543210zyxwvu" 2> $null
 
 Write-Host "   Vault setup complete" -ForegroundColor Green
 
@@ -159,16 +161,20 @@ if ($ciphertext) {
             Write-Host "`n8. Verification..." -ForegroundColor Cyan
             if ($decodedText -eq "test") {
                 Write-Host "   SUCCESS: Encryption and decryption working!" -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Host "   FAILED: Expected 'test', got '$decodedText'" -ForegroundColor Red
             }
-        } catch {
+        }
+        catch {
             Write-Host "   Failed to decode base64: $base64Plaintext" -ForegroundColor Red
         }
-    } else {
+    }
+    else {
         Write-Host "   Could not extract plaintext from decryption output" -ForegroundColor Red
     }
-} else {
+}
+else {
     Write-Host "   Could not extract ciphertext from encryption output" -ForegroundColor Red
     Write-Host "   Raw output was:" -ForegroundColor Yellow
     foreach ($line in $encryptOutput) {
@@ -181,7 +187,8 @@ Write-Host "   Command: vault write transit/encrypt/demo-key plaintext=`"$base64
 
 $customEncrypt = vault write transit/encrypt/demo-key plaintext=$base64Data
 Write-Host "   Custom encryption result:" -ForegroundColor White
-foreach ($line in $customEncrypt) {
+foreach ($line in $customEncrypt)
+{
     Write-Host "   $line" -ForegroundColor Cyan
 }
 
@@ -193,9 +200,12 @@ Write-Host "   Docker containers running" -ForegroundColor Green
 Write-Host "   Vault initialized and ready" -ForegroundColor Green
 Write-Host "   Secret management working" -ForegroundColor Green
 
-if ($ciphertext -and $base64Plaintext) {
+if ($ciphertext -and $base64Plaintext)
+{
     Write-Host "   Cryptographic operations working" -ForegroundColor Green
-} else {
+}
+else
+{
     Write-Host "   Cryptographic operations: Issues with output parsing" -ForegroundColor Yellow
 }
 
@@ -208,7 +218,8 @@ Write-Host "   API Service: http://localhost:8081" -ForegroundColor White
 Write-Host "`nDemo Complete!" -ForegroundColor Green
 Write-Host "===============" -ForegroundColor Green
 
-if (-not $ciphertext) {
+if (-not $ciphertext)
+{
     Write-Host "`nManual test commands:" -ForegroundColor Yellow
     Write-Host "vault write transit/encrypt/demo-key plaintext=`"dGVzdA==`"" -ForegroundColor White
     Write-Host "# Copy the ciphertext and run:" -ForegroundColor Gray
